@@ -1,0 +1,39 @@
+name: Run RustyLoot Scraper
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *" # каждые 15 минут
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run sniffer
+        env:
+          RL_USERNAME: ${{ secrets.RL_USERNAME }}
+          RL_PASSWORD: ${{ secrets.RL_PASSWORD }}
+        run: |
+          python rustyloot_sniffer.py --headless --duration 180
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustyloot-output
+          if-no-files-found: warn
+          path: |
+            rustyloot_sniffer.log
+            inventory.json
+            rustyloot_market.json
